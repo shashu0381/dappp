@@ -58,21 +58,28 @@ Before you begin, ensure you have met the following requirements:
     - Update the contract address in `pages/index.js`.
 
 ## Usage
-1.Inside the project directory, in the terminal type: ```bash 
-                                                        npm i```
+1. Inside the project directory, in the terminal type:
+    ```bash
+    npm i
+    ```
 
-2.Open two additional terminals in your VS code
+2. Open two additional terminals in your VS code
 
-3.In the second terminal type: ```bash
-                        npx hardhat node```
+3. In the second terminal type:
+   ```bash
+   npm run hardhat node
+   ```
 
-4.In the third terminal, type: ``` bash npx hardhat run --network localhost scripts/deploy.js```
+4. In the third terminal, type:
+   ```bash
+   npx hardhat run --network localhost scripts/deploy.js
+   ```
 
-5.Back in the first terminal, type ```bash
-                npm run dev```
-to launch the front-end.
+5. Back in the first terminal, type ```
+                 run dev```
+            to launch the front-end.
 
-4. Interact with the DApp:
+6. Interact with the DApp:
     - View your account balance
     - Deposit Ether by entering the amount and selecting an account
     - Withdraw Ether by entering the amount and selecting an account

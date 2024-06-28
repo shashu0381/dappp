@@ -58,16 +58,19 @@ Before you begin, ensure you have met the following requirements:
     - Update the contract address in `pages/index.js`.
 
 ## Usage
+1.Inside the project directory, in the terminal type: ```bash 
+                                                        npm i```
 
-1. Start the local development server:
+2.Open two additional terminals in your VS code
 
-    ```bash
-    npm run dev
-    ```
+3.In the second terminal type: ```bash
+                        npx hardhat node```
 
-2. Open your browser and navigate to `http://localhost:3000`.
+4.In the third terminal, type: ``` bash npx hardhat run --network localhost scripts/deploy.js```
 
-3. Connect your MetaMask wallet.
+5.Back in the first terminal, type ```bash
+                npm run dev```
+to launch the front-end.
 
 4. Interact with the DApp:
     - View your account balance

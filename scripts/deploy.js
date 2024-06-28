@@ -5,9 +5,9 @@
 // will compile your contracts, add the Hardhat Runtime Environment's members to the
 // global scope, and execute the script.
 const hre = require("hardhat");
-
+// import 'bootstrap/dist/css/bootstrap.min.css';
 async function main() {
-  const initBalance = 1;
+  const initBalance = 100;
   const Assessment = await hre.ethers.getContractFactory("Assessment");
   const assessment = await Assessment.deploy(initBalance);
   await assessment.deployed();

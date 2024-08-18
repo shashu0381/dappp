@@ -6,3 +6,4 @@ Learn more from ready-to-use templates: https://www.gitpod.io/docs/introduction/
 
 tasks:
   - init: npm install
+

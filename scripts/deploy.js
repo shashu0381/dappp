@@ -8,7 +8,6 @@ async function main() {
 
   const Assessment = await ethers.getContractFactory("Assessment");
   const assessment = await Assessment.deploy(initialBalance, initialAddress);
-
   await assessment.deployed();
 
   console.log("Assessment deployed to:", assessment.address);

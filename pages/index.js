@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import atm_abi from "../artifacts/contracts/Assessment.sol/Assessment.json";
 
@@ -7,37 +7,11 @@ export default function HomePage() {
   const [account, setAccount] = useState(undefined);
   const [atm, setATM] = useState(undefined);
   const [balance, setBalance] = useState(undefined);
-  const [selectedQuestion, setSelectedQuestion] = useState('');
-  const [userAnswer, setUserAnswer] = useState('');
-  const [questionNumber, setQuestionNumber] = useState('');
-  const [score, setScore] = useState(0);
-  const [quiz, setQuiz] = useState([
-    {
-      question: "How many years is a typical mortgage?",
-      answer: "30",
-      points: 1
-    },
-    {
-      question: "What is the minimum credit score to get a good mortgage rate?",
-      answer: "700",
-      points: 1
-    },
-    {
-      question: "What is the average annual return of the S&P 500?",
-      answer: "10",
-      points: 1
-    },
-    {
-      question: "How many years does it take for a bond to mature?",
-      answer: "10",
-      points: 1
-    },
-    {
-      question: "What is the typical down payment percentage for a house?",
-      answer: "20",
-      points: 1
-    }
-  ]);
+  const [expenses, setExpenses] = useState([]);
+  const [incomes, setIncomes] = useState([]);
+  const [newAmount, setNewAmount] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [isIncome, setIsIncome] = useState(true);
 
   const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
   const atmABI = atm_abi.abi;
@@ -51,28 +25,26 @@ export default function HomePage() {
       const accounts = await ethWallet.request({ method: "eth_accounts" });
       handleAccount(accounts);
     }
-  }
+  };
 
   const handleAccount = (account) => {
     if (account) {
       console.log("Account connected: ", account);
       setAccount(account);
-    }
-    else {
+    } else {
       console.log("No account found");
     }
-  }
+  };
 
   const connectAccount = async () => {
     if (!ethWallet) {
-      alert('MetaMask wallet is required to connect');
+      alert("MetaMask wallet is required to connect");
       return;
     }
 
-    const accounts = await ethWallet.request({ method: 'eth_requestAccounts' });
+    const accounts = await ethWallet.request({ method: "eth_requestAccounts" });
     handleAccount(accounts);
 
-    // once wallet is set we can get a reference to our deployed contract
     getATMContract();
   };
 
@@ -82,181 +54,271 @@ export default function HomePage() {
     const atmContract = new ethers.Contract(contractAddress, atmABI, signer);
 
     setATM(atmContract);
-  }
+  };
 
   const getBalance = async () => {
     if (atm) {
       setBalance((await atm.getBalance()).toNumber());
     }
-  }
+  };
 
-  const deposit = async (amount) => {
+  const deposit = async () => {
     if (atm) {
-      if (amount < 25) {
-        alert("Minimum deposit amount is 25 ETH.");
-        return;
-      }
-      let tx = await atm.deposit(amount);
-      await tx.wait()
+      let tx = await atm.deposit(1);
+      await tx.wait();
       getBalance();
     }
-  }
+  };
 
-  const withdraw = async (amount) => {
+  const withdraw = async () => {
     if (atm) {
-      if (amount < 20) {
-        alert("Minimum withdrawal amount is 20 ETH.");
-        return;
-      }
-      let tx = await atm.withdraw(amount);
-      await tx.wait()
+      let tx = await atm.withdraw(1);
+      await tx.wait();
       getBalance();
     }
-  }
+  };
 
-  const handleQuestionSelection = (event) => {
-    const selectedQuestion = event.target.value;
-    setSelectedQuestion(selectedQuestion);
-  }
-
-  const handleAnswerSubmission = () => {
-    const selectedQuiz = quiz.find(q => q.question === selectedQuestion);
-    if (selectedQuiz && selectedQuiz.answer === userAnswer) {
-      setScore(score + selectedQuiz.points);
-    } else {
-      alert("Incorrect answer.");
+  const initUser = () => {
+    if (!ethWallet) {
+      return <p>Please install Metamask in order to use this ATM.</p>;
     }
-    setUserAnswer('');
-  }
 
-  const handleRemoveQuestion = () => {
-    const questionIndex = parseInt(questionNumber) - 1;
-    if (!isNaN(questionIndex) && questionIndex >= 0 && questionIndex < quiz.length) {
-      const updatedQuiz = [...quiz];
-      updatedQuiz.splice(questionIndex, 1);
-      setQuiz(updatedQuiz);
-    } else {
-      alert("Please enter a valid question number to remove the quiz question.");
+    if (!account) {
+      return (
+        <button onClick={connectAccount}>Please connect your Metamask wallet</button>
+      );
     }
-  }
 
-  useEffect(() => { getWallet(); }, []);
+    if (balance === undefined) {
+      getBalance();
+    }
+
+    return (
+      <div>
+        <p>Your Account: {account}</p>
+        <p>Your Balance: {balance}</p>
+        <button onClick={deposit}>Deposit 1 ETH</button>
+        <button onClick={withdraw}>Withdraw 1 ETH</button>
+        <div>
+          <h2>Financial Transactions</h2>
+          <label>
+            <input
+              type="radio"
+              name="transactionType"
+              checked={isIncome}
+              onChange={() => setIsIncome(true)}
+            />
+            Income
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="transactionType"
+              checked={!isIncome}
+              onChange={() => setIsIncome(false)}
+            />
+            Expense
+          </label>
+          <form onSubmit={addTransaction}>
+            <input
+              type="number"
+              placeholder="Enter amount"
+              value={newAmount}
+              onChange={(e) => setNewAmount(e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="Enter description"
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+            />
+            <button type="submit">Add Transaction</button>
+          </form>
+          <div className="transaction-tables">
+            <div className="transaction-column">
+              <h3>Incomes</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {incomes.map((income, index) => (
+                    <tr key={index}>
+                      <td>{index + 1}</td>
+                      <td>{income.amount}</td>
+                      <td>{income.description}</td>
+                      <td>
+                        <button onClick={() => removeTransaction(index, false)}>Remove</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="transaction-column">
+              <h3>Expenses</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {expenses.map((expense, index) => (
+                    <tr key={index}>
+                      <td>{index + 1}</td>
+                      <td>{expense.amount}</td>
+                      <td>{expense.description}</td>
+                      <td>
+                        <button onClick={() => removeTransaction(index, true)}>Remove</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const addTransaction = (e) => {
+    e.preventDefault();
+    const transaction = {
+      amount: newAmount,
+      description: newDescription,
+    };
+
+    if (isIncome) {
+      setIncomes([...incomes, transaction]);
+    } else {
+      setExpenses([...expenses, transaction]);
+    }
+
+    setNewAmount("");
+    setNewDescription("");
+  };
+
+  const removeTransaction = (index, isExpense) => {
+    if (isExpense) {
+      const updatedExpenses = [...expenses];
+      updatedExpenses.splice(index, 1);
+      setExpenses(updatedExpenses);
+    } else {
+      const updatedIncomes = [...incomes];
+      updatedIncomes.splice(index, 1);
+      setIncomes(updatedIncomes);
+    }
+  };
+
+  useEffect(() => {
+    getWallet();
+  }, []);
 
   return (
     <main className="container">
-      <header><h1>Welcome to the Metacrafters ATM!</h1></header>
-      <div className="atm-container">
-        <div className="atm">
-          <div>
-            {ethWallet ? (
-              <div>
-                <p>Your Account: {account}</p>
-                <p>Your Balance: {balance}</p>
-                <button onClick={() => deposit(prompt("Enter deposit amount:"))}>Deposit</button>
-                <button onClick={() => withdraw(prompt("Enter withdrawal amount:"))}>Withdraw</button>
-              </div>
-            ) : (
-              <p>Please install Metamask in order to use this ATM.</p>
-            )}
-            {!account && (
-              <button onClick={connectAccount}>Please connect your Metamask wallet</button>
-            )}
-          </div>
-        </div>
-        <div className="quiz">
-          <h2>Finance Quiz</h2>
-          <div>
-            <select onChange={handleQuestionSelection}>
-              <option value="">Select a Question</option>
-              {quiz.map((q, index) => (
-                <option key={index} value={q.question}>{q.question}</option>
-              ))}
-            </select>
-          </div>
-          {selectedQuestion && (
-            <div>
-              <p>Question: {selectedQuestion}</p>
-              <input
-                type="text"
-                placeholder="Enter your answer"
-                value={userAnswer}
-                onChange={(e) => setUserAnswer(e.target.value)}
-              />
-              <button onClick={handleAnswerSubmission}>Submit Answer</button>
-            </div>
-          )}
-          <div>
-            <input
-              type="number"
-              placeholder="Enter question number to remove"
-              value={questionNumber}
-              onChange={(e) => setQuestionNumber(e.target.value)}
-            />
-            <button onClick={handleRemoveQuestion}>Remove Question</button>
-          </div>
-          <p>Score: {score} / 5</p>
-        </div>
-      </div>
+      <header>
+        <h1>Welcome to the Metacrafters ATM!</h1>
+      </header>
+      {initUser()}
       <style jsx>{`
         .container {
           text-align: center;
-          font-family: Arial, sans-serif;
-          color: #333;
-          background-color: green;
+          background: linear-gradient(135deg, #f3ec78, #af4261);
           padding: 20px;
-          border-radius: 10px;
-        }
-        header h1 {
-          color: #fff;
-        }
-        .atm-container {
+          font-family: "Arial", sans-serif;
+          min-height: 100vh;
           display: flex;
-          justify-content: space-between;
-          background-color: #f9f9f9;
-          padding: 20px;
-          border-radius: 10px;
-          margin-top: 20px;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
         }
-        .atm, .quiz {
-          flex: 1;
-          padding: 20px;
-          border-radius: 10px;
-          background-color: #fff;
-          margin: 0 10px;
-          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .atm p, .quiz p {
-          font-size: 1.2em;
-          color: #555;
-        }
-        .quiz h2 {
-          background-color: #007bff;
+        h1 {
+          font-size: 3em;
           color: #fff;
-          padding: 10px;
-          border-radius: 5px;
+          margin-bottom: 20px;
+        }
+        p {
           font-size: 1.5em;
-        }
-        .quiz select, .quiz input {
-          font-size: 1.2em;
-          padding: 10px;
-          margin: 10px 0;
-          border: 1px solid #ccc;
-          border-radius: 5px;
-          width: 100%;
-        }
-        .quiz button {
-          background-color: #007bff;
           color: #fff;
-          padding: 10px 20px;
+        }
+        button {
+          background-color: #007bff;
           border: none;
           border-radius: 5px;
+          padding: 15px 30px;
+          font-size: 1.2em;
+          color: white;
+          margin: 10px;
           cursor: pointer;
+          transition: background-color 0.3s ease;
+        }
+        button:hover {
+          background-color: #0056b3;
+        }
+        form {
+          margin-bottom: 20px;
+        }
+        input[type="number"], input[type="text"] {
+          padding: 10px;
+          margin-right: 10px;
+          border-radius: 5px;
+          border: 1px solid #ccc;
           font-size: 1.2em;
         }
-        .quiz button:hover {
-          background-color: #0056b3;
+        button[type="submit"] {
+          padding: 10px 20px;
+          font-size: 1.2em;
+          background-color: #28a745;
+          color: white;
+          border: none;
+          border-radius: 5px;
+        }
+        .transaction-tables {
+          display: flex;
+          justify-content: space-around;
+          width: 100%;
+        }
+        .transaction-column {
+          width: 45%;
+          background-color: #fff;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h3 {
+          color: #333;
+          margin-bottom: 10px;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        th, td {
+          padding: 10px;
+          border: 1px solid #ddd;
+          text-align: left;
+        }
+        th {
+          background-color: #007bff;
+          color: white;
+        }
+        td {
+          background-color: #f9f9f9;
+        }
+        button {
+          margin-left: 10px;
         }
       `}</style>
     </main>
-  )
+  );
 }

@@ -12,7 +12,6 @@ async function main() {
 
   console.log("Assessment deployed to:", assessment.address);
 }
-
 main()
   .then(() => process.exit(0))
   .catch((error) => {

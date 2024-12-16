@@ -1,4 +1,3 @@
-
 # Metacrafters ATM DApp
 
 This project is a decentralized application (DApp) that interacts with an Ethereum smart contract to simulate an ATM. It allows users to connect their MetaMask wallet, view their balance, deposit and withdraw Ether, and track their income and expenses.

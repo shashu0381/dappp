@@ -10,6 +10,7 @@ contract Assessment {
         string description;
     }
 
+
     Transaction[] public incomes;
     Transaction[] public expenses;
 
